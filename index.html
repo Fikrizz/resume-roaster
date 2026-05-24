@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resume Roaster — Brutal AI CV Critique</title>
+<meta name="description" content="Paste CV kamu, dapat kritik brutal-tapi-jujur dari AI. Powered by Xiaomi MiMo.">
+<style>
+:root {
+  --bg: #0a0a0f;
+  --surface: #14141c;
+  --surface-2: #1c1c28;
+  --border: #2a2a38;
+  --text: #f5f5f7;
+  --text-dim: #a1a1aa;
+  --accent: #ff4d2e;
+  --accent-2: #ff8a3d;
+  --success: #22c55e;
+  --warning: #facc15;
+  --danger: #ef4444;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  background-image: radial-gradient(circle at 20% 0%, rgba(255,77,46,0.12) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 100%, rgba(255,138,61,0.08) 0%, transparent 50%);
+}
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  border-bottom: 1px solid var(--border);
+  background: rgba(10,10,15,0.8);
+  backdrop-filter: blur(12px);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.brand { display: flex; align-items: center; gap: 0.75rem; font-weight: 700; font-size: 1.25rem; }
+.brand-icon {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.25rem;
+}
+.btn {
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.15s;
+  display: inline-flex; align-items: center; gap: 0.5rem;
+}
+.btn:hover { background: var(--surface-2); border-color: var(--accent); }
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+  border: none;
+  color: white;
+  font-weight: 600;
+}
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(255,77,46,0.3); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+main { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+.hero { text-align: center; padding: 3rem 1rem 2rem; }
+.hero h1 { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 800; line-height: 1.1; margin-bottom: 1rem; }
+.hero h1 .gradient { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.hero p { color: var(--text-dim); font-size: 1.1rem; max-width: 600px; margin: 0 auto; }
+.workspace { display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-top: 2rem; }
+@media (min-width: 900px) { .workspace.has-result { grid-template-columns: 1fr 1fr; } }
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+.panel-title { font-weight: 600; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+textarea {
+  width: 100%;
+  min-height: 320px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  color: var(--text);
+  font-family: 'SF Mono', Monaco, Consolas, monospace;
+  font-size: 0.9rem;
+  resize: vertical;
+}
+textarea:focus { outline: none; border-color: var(--accent); }
+.toolbar { display: flex; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap; }
+.score-box {
+  background: linear-gradient(135deg, rgba(255,77,46,0.1), rgba(255,138,61,0.05));
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+.score-num { font-size: 4rem; font-weight: 800; line-height: 1; }
+.score-label { color: var(--text-dim); margin-top: 0.5rem; text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.8rem; }
+.result-content { line-height: 1.7; color: var(--text); }
+.result-content h3 { color: var(--accent); margin: 1rem 0 0.5rem; font-size: 1.1rem; }
+.result-content ul { padding-left: 1.5rem; margin: 0.5rem 0; }
+.result-content li { margin: 0.3rem 0; }
+.result-content strong { color: var(--accent-2); }
+.tag {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  margin: 0.2rem;
+}
+.tag.green { color: var(--success); border-color: var(--success); }
+.tag.red { color: var(--danger); border-color: var(--danger); }
+.spinner {
+  display: inline-block;
+  width: 16px; height: 16px;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.modal {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+  display: none;
+  align-items: center; justify-content: center;
+  z-index: 100;
+}
+.modal.open { display: flex; }
+.modal-content {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  width: min(500px, 90vw);
+}
+.modal-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+.modal-close { background: none; border: none; color: var(--text-dim); font-size: 1.5rem; cursor: pointer; }
+.field { margin-bottom: 1rem; }
+.field label { display: block; margin-bottom: 0.4rem; color: var(--text-dim); font-size: 0.9rem; }
+.field input, .field select {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+}
+.field input:focus, .field select:focus { outline: none; border-color: var(--accent); }
+.empty {
+  text-align: center;
+  color: var(--text-dim);
+  padding: 3rem 1rem;
+}
+.empty-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
+footer {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  border-top: 1px solid var(--border);
+  margin-top: 3rem;
+}
+.examples { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+.example-chip {
+  padding: 0.4rem 0.8rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.example-chip:hover { border-color: var(--accent); color: var(--accent); }
+.toast {
+  position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
+  background: var(--surface-2); border: 1px solid var(--border);
+  padding: 0.8rem 1.5rem; border-radius: 8px;
+  z-index: 200;
+  display: none;
+}
+.toast.show { display: block; animation: slideUp 0.3s; }
+@keyframes slideUp { from { opacity: 0; transform: translate(-50%, 20px); } to { opacity: 1; transform: translate(-50%, 0); } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-icon">🔥</div>
+    <span>Resume Roaster</span>
+  </div>
+  <div style="display: flex; gap: 0.5rem;">
+    <button class="btn" onclick="openSettings()">⚙ Settings</button>
+    <a class="btn" href="https://github.com/Fikrizz" target="_blank" rel="noopener">GitHub</a>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <h1>CV kamu butuh <span class="gradient">roasting brutal</span><br>biar gak nyangkut di ATS</h1>
+    <p>Paste resume, dapat skor + kritik jujur + saran perbaikan dari AI. Gak ada coddling, cuma feedback yang bikin CV kamu hire-able.</p>
+  </section>
+
+  <div class="workspace" id="workspace">
+    <div class="panel">
+      <div class="panel-title">📝 Paste CV kamu</div>
+      <textarea id="cvInput" placeholder="Copy-paste isi CV/resume kamu di sini... (plain text aja, gak perlu format)
+
+Contoh:
+Nama: Budi Santoso
+Email: budi@email.com
+
+PENGALAMAN
+- Software Engineer di PT Anu (2022-sekarang)
+- Junior Dev di PT Itu (2020-2022)
+
+PENDIDIKAN
+- S1 Informatika, Universitas X (2016-2020)
+
+SKILL
+- JavaScript, Python, Docker, AWS"></textarea>
+      <div class="examples">
+        <span style="color: var(--text-dim); font-size: 0.85rem;">Contoh:</span>
+        <span class="example-chip" onclick="loadExample('junior')">Junior Dev</span>
+        <span class="example-chip" onclick="loadExample('senior')">Senior Engineer</span>
+        <span class="example-chip" onclick="loadExample('marketing')">Marketing</span>
+      </div>
+      <div class="toolbar">
+        <button class="btn btn-primary" id="roastBtn" onclick="roastResume()">
+          <span id="roastBtnText">🔥 Roast My CV</span>
+        </button>
+        <button class="btn" onclick="clearAll()">Clear</button>
+      </div>
+    </div>
+
+    <div class="panel" id="resultPanel" style="display: none;">
+      <div class="panel-title">🎯 Verdict AI</div>
+      <div id="resultContent"></div>
+      <div class="toolbar" id="resultActions" style="display: none;">
+        <button class="btn" onclick="copyResult()">📋 Copy</button>
+        <button class="btn" onclick="downloadResult()">💾 Download .md</button>
+        <button class="btn" onclick="shareResult()">🔗 Share</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="modal" id="settingsModal">
+  <div class="modal-content">
+    <div class="modal-title">
+      <h2>⚙ Settings</h2>
+      <button class="modal-close" onclick="closeSettings()">×</button>
+    </div>
+    <div class="field">
+      <label>MiMo API Key (optional — pakai key sendiri buat hasil terbaik)</label>
+      <input type="password" id="apiKey" placeholder="mimo-xxxxx... (kosongin buat pakai demo gratis)">
+      <small style="color: var(--text-dim); font-size: 0.8rem;">Get key: <a href="https://api.xiaomimimo.com" target="_blank" style="color: var(--accent);">api.xiaomimimo.com</a></small>
+    </div>
+    <div class="field">
+      <label>Model</label>
+      <select id="model">
+        <option value="mimo-v2.5-reasoning">MiMo V2.5 Reasoning (best)</option>
+        <option value="mimo-v2.5">MiMo V2.5 (faster)</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Roast Level</label>
+      <select id="roastLevel">
+        <option value="gentle">😊 Gentle (constructive feedback)</option>
+        <option value="brutal" selected>🔥 Brutal (no holds barred)</option>
+        <option value="savage">💀 Savage (mengandung api)</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Bahasa Output</label>
+      <select id="lang">
+        <option value="id" selected>Indonesia</option>
+        <option value="en">English</option>
+      </select>
+    </div>
+    <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+      <button class="btn" onclick="testConnection()">Test Connection</button>
+      <button class="btn btn-primary" onclick="saveSettings()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<footer>
+  Powered by <strong>Xiaomi MiMo</strong> · Built for <a href="https://100t.xiaomimimo.com" target="_blank" style="color: var(--accent);">MiMo 100T Creator Program</a> · <a href="https://github.com/Fikrizz" target="_blank" style="color: var(--accent);">@Fikrizz</a>
+</footer>
+
+<script>
+const STORAGE_KEY = 'resume-roaster-settings';
+const ENDPOINTS = {
+  mimo: 'https://api.xiaomimimo.com/v1/chat/completions',
+  pollinations: 'https://text.pollinations.ai/openai'
+};
+
+function loadSettings() {
+  const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  document.getElementById('apiKey').value = saved.apiKey || '';
+  document.getElementById('model').value = saved.model || 'mimo-v2.5-reasoning';
+  document.getElementById('roastLevel').value = saved.roastLevel || 'brutal';
+  document.getElementById('lang').value = saved.lang || 'id';
+}
+function saveSettings() {
+  const settings = {
+    apiKey: document.getElementById('apiKey').value.trim(),
+    model: document.getElementById('model').value,
+    roastLevel: document.getElementById('roastLevel').value,
+    lang: document.getElementById('lang').value
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+  toast('✓ Settings saved');
+  closeSettings();
+}
+function getSettings() { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
+function openSettings() { document.getElementById('settingsModal').classList.add('open'); }
+function closeSettings() { document.getElementById('settingsModal').classList.remove('open'); }
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+const EXAMPLES = {
+  junior: `Nama: Andi Pratama\nEmail: andi.pratama@gmail.com\n\nPENGALAMAN\n- Internship Frontend Dev di Tokopedia (3 bulan, 2024)\n- Freelance bikin landing page (10+ klien)\n\nPENDIDIKAN\n- S1 Teknik Informatika, ITS (2020-2024), IPK 3.4\n\nSKILL\n- HTML, CSS, JavaScript, React, Tailwind\n- Git, Figma\n- Bahasa Inggris pasif`,
+  senior: `Name: Sarah Wijaya\nEmail: sarah.w@email.com\nLinkedIn: /in/sarahwijaya\n\nEXPERIENCE\n- Lead Engineer at Gojek (2021-now): Led team of 8, migrated monolith to microservices, reduced p99 latency 40%\n- Senior SWE at Traveloka (2018-2021): Built payment infra handling $50M/month\n- SWE at Bukalapak (2015-2018)\n\nEDUCATION\n- BSc CS, Stanford (2011-2015)\n\nSKILLS\nGo, Kotlin, AWS, Kubernetes, gRPC, PostgreSQL`,
+  marketing: `Nama: Putri Anjani\nIG: @putrimkt\n\nPENGALAMAN\n- Social Media Specialist di brand fashion (2 tahun)\n- Content Creator pribadi 50k followers\n- Magang di agency 6 bulan\n\nPENDIDIKAN\n- S1 Komunikasi, UI\n\nSKILL\n- Canva, CapCut, copywriting\n- Hootsuite, Meta Business Suite\n- Public speaking`
+};
+function loadExample(key) {
+  document.getElementById('cvInput').value = EXAMPLES[key];
+}
+
+function buildPrompt(cv, level, lang) {
+  const persona = {
+    gentle: "Kamu adalah career coach yang supportive tapi jujur. Kasih feedback konstruktif dengan empati.",
+    brutal: "Kamu adalah hiring manager senior yang udah lihat 10,000+ CV. Kamu jujur brutal, gak suka basa-basi, langsung tunjuk red flag dan weakness. Tapi kamu fair — strength yang nyata kamu akui.",
+    savage: "Kamu adalah hiring manager dengan trauma membaca CV jelek. Kamu sarcastic, witty, kasih roasting tajam tapi tetap insightful. Akhiri tetep dengan saran konkret biar useful, bukan cuma menghina."
+  }[level];
+  
+  const langInstr = lang === 'id' ? 'Tulis dalam Bahasa Indonesia.' : 'Write in English.';
+  
+  return `${persona}\n\n${langInstr}\n\nAnalisis CV berikut dan kasih output dengan format EXACT:\n\nSCORE: [angka 1-100]\n\nFIRST_IMPRESSION:\n[2-3 kalimat kesan pertama]\n\nSTRENGTHS:\n- [poin 1]\n- [poin 2]\n- [poin 3]\n\nWEAKNESSES:\n- [poin 1, spesifik dan tunjuk lokasi di CV]\n- [poin 2]\n- [poin 3]\n\nRED_FLAGS:\n- [hal yang bikin recruiter skip, atau "Tidak ada" kalau emang bersih]\n\nATS_ISSUES:\n- [masalah dari sisi Applicant Tracking System]\n\nFIX_LIST:\n1. [aksi konkret 1]\n2. [aksi konkret 2]\n3. [aksi konkret 3]\n4. [aksi konkret 4]\n5. [aksi konkret 5]\n\nVERDICT:\n[1 paragraf summary, kasih tau ini layak dipanggil interview atau enggak, dan kenapa]\n\n---CV BERIKUT---\n${cv}\n---END CV---`;
+}
+
+async function callAI(prompt) {
+  const settings = getSettings();
+  const messages = [{ role: 'user', content: prompt }];
+  
+  // Try MiMo if user has key
+  if (settings.apiKey) {
+    try {
+      const res = await fetch(ENDPOINTS.mimo, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${settings.apiKey}` },
+        body: JSON.stringify({
+          model: settings.model || 'mimo-v2.5-reasoning',
+          messages,
+          temperature: 0.8,
+          max_tokens: 2000
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return { text: data.choices[0].message.content, source: 'MiMo' };
+      }
+    } catch (e) { console.warn('MiMo failed:', e); }
+  }
+  
+  // Fallback: Pollinations free
+  try {
+    const res = await fetch(ENDPOINTS.pollinations, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'openai', messages, temperature: 0.8 })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return { text: data.choices[0].message.content, source: 'Pollinations (demo)' };
+    }
+  } catch (e) { console.warn('Pollinations failed:', e); }
+  
+  throw new Error('AI service unavailable. Coba lagi atau set API key di Settings.');
+}
+
+async function testConnection() {
+  toast('Testing...');
+  try {
+    const r = await callAI('Reply with one word: pong');
+    toast(`✓ Connected via ${r.source}`);
+  } catch (e) {
+    toast(`✗ ${e.message}`);
+  }
+}
+
+let lastResult = '';
+
+async function roastResume() {
+  const cv = document.getElementById('cvInput').value.trim();
+  if (cv.length < 50) {
+    toast('CV kependekan, minimal 50 karakter');
+    return;
+  }
+  
+  const settings = getSettings();
+  const btn = document.getElementById('roastBtn');
+  const btnText = document.getElementById('roastBtnText');
+  btn.disabled = true;
+  btnText.innerHTML = '<span class="spinner"></span> Roasting...';
+  
+  document.getElementById('workspace').classList.add('has-result');
+  document.getElementById('resultPanel').style.display = 'block';
+  document.getElementById('resultContent').innerHTML = '<div class="empty"><div class="spinner" style="width:32px;height:32px;border-width:3px;"></div><p style="margin-top:1rem;">AI lagi baca CV kamu sambil ngelus dada...</p></div>';
+  document.getElementById('resultActions').style.display = 'none';
+  
+  try {
+    const prompt = buildPrompt(cv, settings.roastLevel || 'brutal', settings.lang || 'id');
+    const result = await callAI(prompt);
+    lastResult = result.text;
+    renderResult(result.text, result.source);
+    document.getElementById('resultActions').style.display = 'flex';
+  } catch (e) {
+    document.getElementById('resultContent').innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><p>${e.message}</p></div>`;
+  } finally {
+    btn.disabled = false;
+    btnText.innerHTML = '🔥 Roast Again';
+  }
+}
+
+function renderResult(text, source) {
+  const score = (text.match(/SCORE:\s*(\d+)/i) || [])[1] || '?';
+  const sections = {};
+  const sectionRegex = /(FIRST_IMPRESSION|STRENGTHS|WEAKNESSES|RED_FLAGS|ATS_ISSUES|FIX_LIST|VERDICT):\s*([\s\S]*?)(?=\n[A-Z_]+:|$)/g;
+  let m;
+  while ((m = sectionRegex.exec(text)) !== null) sections[m[1]] = m[2].trim();
+  
+  let scoreColor = '#22c55e';
+  if (score < 60) scoreColor = '#ef4444';
+  else if (score < 80) scoreColor = '#facc15';
+  
+  let html = `
+    <div class="score-box" style="border-color: ${scoreColor};">
+      <div class="score-num" style="color: ${scoreColor};">${score}<span style="font-size:1.5rem;color:var(--text-dim);">/100</span></div>
+      <div class="score-label">CV Score</div>
+    </div>
+    <div class="result-content">`;
+  
+  if (sections.FIRST_IMPRESSION) html += `<h3>👀 First Impression</h3><p>${escapeHtml(sections.FIRST_IMPRESSION)}</p>`;
+  if (sections.STRENGTHS) html += `<h3>💪 Strengths</h3>${formatList(sections.STRENGTHS, 'green')}`;
+  if (sections.WEAKNESSES) html += `<h3>🩹 Weaknesses</h3>${formatList(sections.WEAKNESSES)}`;
+  if (sections.RED_FLAGS) html += `<h3>🚩 Red Flags</h3>${formatList(sections.RED_FLAGS, 'red')}`;
+  if (sections.ATS_ISSUES) html += `<h3>🤖 ATS Issues</h3>${formatList(sections.ATS_ISSUES)}`;
+  if (sections.FIX_LIST) html += `<h3>🛠️ Fix List (do these now)</h3>${formatOrderedList(sections.FIX_LIST)}`;
+  if (sections.VERDICT) html += `<h3>⚖️ Final Verdict</h3><p>${escapeHtml(sections.VERDICT)}</p>`;
+  
+  // Fallback: if parsing fails, just show raw
+  if (Object.keys(sections).length === 0) {
+    html += `<pre style="white-space:pre-wrap;font-family:inherit;">${escapeHtml(text)}</pre>`;
+  }
+  
+  html += `<p style="margin-top:1.5rem;color:var(--text-dim);font-size:0.85rem;">via ${source}</p></div>`;
+  document.getElementById('resultContent').innerHTML = html;
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function formatList(text, cls = '') {
+  const items = text.split('\n').filter(l => l.trim().match(/^[-•*]/));
+  if (items.length === 0) return `<p>${escapeHtml(text)}</p>`;
+  return '<ul>' + items.map(i => `<li${cls?' class="'+cls+'"':''}>${escapeHtml(i.replace(/^[-•*]\s*/, ''))}</li>`).join('') + '</ul>';
+}
+function formatOrderedList(text) {
+  const items = text.split('\n').filter(l => l.trim().match(/^\d+\./));
+  if (items.length === 0) return formatList(text);
+  return '<ol style="padding-left:1.5rem;">' + items.map(i => `<li>${escapeHtml(i.replace(/^\d+\.\s*/, ''))}</li>`).join('') + '</ol>';
+}
+
+function clearAll() {
+  document.getElementById('cvInput').value = '';
+  document.getElementById('resultPanel').style.display = 'none';
+  document.getElementById('workspace').classList.remove('has-result');
+  lastResult = '';
+}
+function copyResult() {
+  navigator.clipboard.writeText(lastResult);
+  toast('✓ Copied to clipboard');
+}
+function downloadResult() {
+  const blob = new Blob([`# Resume Roast Result\n\n${lastResult}\n\n---\nGenerated by Resume Roaster · Powered by MiMo AI\n`], { type: 'text/markdown' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `resume-roast-${Date.now()}.md`; a.click();
+  URL.revokeObjectURL(url);
+}
+function shareResult() {
+  const score = (lastResult.match(/SCORE:\s*(\d+)/i) || [])[1] || '?';
+  const text = `My CV got roasted by AI. Score: ${score}/100 🔥\n\nTry yours: `;
+  if (navigator.share) {
+    navigator.share({ title: 'Resume Roaster', text, url: location.href });
+  } else {
+    navigator.clipboard.writeText(text + location.href);
+    toast('✓ Share link copied');
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeSettings();
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') roastResume();
+});
+
+loadSettings();
+</script>
+</body>
+</html>
